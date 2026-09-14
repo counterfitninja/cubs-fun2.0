@@ -7,7 +7,7 @@
   "name": "Cubs Games (Next.js)",
   "author": "cubs-games-site",
   "description": "Pelican egg for hosting the Cubs Games Next.js application. The server downloads the 2.0 branch from the configured GitHub repository on each startup, installs dependencies, builds the app, and starts Next.js.",
-  "features": null,
+  "features": [],
   "docker_images": {
     "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22"
   },
@@ -31,7 +31,7 @@
       "name": "Repository URL",
       "description": "GitHub repository URL without a trailing slash. The 2.0 branch will be downloaded.",
       "env_variable": "REPOSITORY_URL",
-      "default": "https://github.com/counterfitninja/cubs-fun2.0",
+      "default_value": "https://github.com/counterfitninja/cubs-fun2.0",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",
