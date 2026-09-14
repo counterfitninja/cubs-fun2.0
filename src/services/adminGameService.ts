@@ -23,3 +23,26 @@ export function setGamePublicationStatus(games: Game[], gameId: string, status: 
   if (!canPerform(role, action)) throw new Error("Only authorised admins may change publication state");
   return games.map((game) => (game.id === gameId ? changePublicationStatus(game, status) : game));
 }
+
+export function importGames(games: Game[], importedGames: Game[], role: UserRole): Game[] {
+  if (!canPerform(role, "create")) throw new Error("Only authorised admins may import games");
+
+  const existingTitles = new Set(games.map((game) => normaliseTitle(game.title)));
+  const imported = importedGames.filter((game) => {
+    const title = normaliseTitle(game.title);
+    if (existingTitles.has(title)) return false;
+    existingTitles.add(title);
+    return true;
+  });
+
+  return [...games, ...imported];
+}
+
+export function clearGames(role: UserRole): Game[] {
+  if (!canPerform(role, "delete")) throw new Error("Only authorised admins may clear games");
+  return [];
+}
+
+function normaliseTitle(title: string): string {
+  return title.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}

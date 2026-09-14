@@ -62,7 +62,7 @@ function toGame(entry: MarkdownEntry, index: number): Game {
   const space = spaceFrom(instructions);
   const energyLevel = energyFrom(instructions);
   const equipment = equipmentFrom(entry.body);
-  const id = `${slugify(entry.title)}-${index + 1}`;
+  const id = slugify(entry.title) || `imported-game-${index + 1}`;
   const timestamp = "2026-09-14T12:00:00.000Z";
 
   return {

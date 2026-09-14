@@ -1,6 +1,6 @@
 import type { UserRole, UserRoleName } from "./types";
 
-const adminActions = new Set(["create", "edit", "publish", "retire", "unpublish", "restore"]);
+const adminActions = new Set(["create", "edit", "delete", "publish", "retire", "unpublish", "restore"]);
 
 export function canPerform(role: UserRole, action: string): boolean {
   if (!role.active) return false;

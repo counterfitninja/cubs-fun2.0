@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Favourite, Game, PlayedRating, PublicationStatus } from "@/src/domain/types";
 import { currentLeaderId, demoAdminRole, seedFavourites, seedGames, seedRatings } from "@/src/persistence/inMemoryStore";
-import { createGame, editGame, setGamePublicationStatus } from "./adminGameService";
+import { clearGames, createGame, editGame, importGames, setGamePublicationStatus } from "./adminGameService";
 import { ratePlayedGame, toggleFavourite } from "./engagementService";
 
 interface AppStore {
@@ -16,6 +16,8 @@ interface AppStore {
   saveGame: (game: Game) => void;
   updateGame: (gameId: string, changes: Partial<Game>) => void;
   changeStatus: (gameId: string, status: PublicationStatus) => void;
+  importGames: () => Promise<number>;
+  clearAllGames: () => void;
 }
 
 const StoreContext = createContext<AppStore | undefined>(undefined);
@@ -41,19 +43,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void fetch("/api/games")
-      .then((response) => response.ok ? response.json() as Promise<Game[]> : [])
-      .then((markdownGames) => {
-        if (!markdownGames.length) return;
-        setGames((current) => {
-          const gameIds = new Set(current.map((game) => game.id));
-          return [...current, ...markdownGames.filter((game) => !gameIds.has(game.id))];
-        });
-      })
-      .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify({ games, favourites, ratings }));
   }, [games, favourites, ratings]);
 
@@ -69,7 +58,21 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       ),
     saveGame: (game) => setGames((current) => createGame(current, game, demoAdminRole)),
     updateGame: (gameId, changes) => setGames((current) => editGame(current, gameId, changes, demoAdminRole)),
-    changeStatus: (gameId, status) => setGames((current) => setGamePublicationStatus(current, gameId, status, demoAdminRole))
+    changeStatus: (gameId, status) => setGames((current) => setGamePublicationStatus(current, gameId, status, demoAdminRole)),
+    importGames: async () => {
+      const response = await fetch("/api/games");
+      if (!response.ok) throw new Error("Could not load games.md");
+      const markdownGames = await response.json() as Game[];
+      const next = importGames(games, markdownGames, demoAdminRole);
+      setGames(next);
+      const importedCount = next.length - games.length;
+      return importedCount;
+    },
+    clearAllGames: () => {
+      setGames(() => clearGames(demoAdminRole));
+      setFavourites([]);
+      setRatings([]);
+    }
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
