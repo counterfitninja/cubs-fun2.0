@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-09-14T00:00:00+00:00",
+  "name": "Cubs Games (Next.js)",
+  "author": "cubs-games-site",
+  "description": "Pelican egg for hosting the Cubs Games Next.js application. Upload the project files, then install the server to install dependencies and create the production build.",
+  "features": null,
+  "docker_images": {
+    "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22"
+  },
+  "file_denylist": [],
+  "startup": "npm run start -- --hostname 0.0.0.0 --port {{SERVER_PORT}}",
+  "config": {
+    "files": "{}",
+    "startup": "{}",
+    "logs": "{}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\nset -e\ncd /mnt/server\nif [ -f package-lock.json ]; then\n  npm ci\nelse\n  npm install\nfi\nnpm run build\necho 'Cubs Games installation complete.'",
+      "container": "ghcr.io/parkervcp/installers:debian",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": []
+}
