@@ -6,13 +6,13 @@
   "exported_at": "2026-09-14T00:00:00+00:00",
   "name": "Cubs Games (Next.js)",
   "author": "cubs-games-site",
-  "description": "Pelican egg for hosting the Cubs Games Next.js application. The server downloads the 2.0 branch from the configured GitHub repository on each startup, installs dependencies, builds the app, and starts Next.js.",
+  "description": "Pelican egg for hosting the Cubs Games Next.js application. The server clones the 2.0 branch from the configured GitHub repository on each startup, installs dependencies, builds the app, and starts Next.js.",
   "features": [],
   "docker_images": {
     "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22"
   },
   "file_denylist": [],
-  "startup": "bash -lc 'set -e; cd /mnt/server; archive=/tmp/cubs-games-2.0.tar.gz; rm -f \"$archive\"; curl -fsSL {{REPOSITORY_URL}}/archive/refs/heads/2.0.tar.gz -o \"$archive\"; rm -rf /tmp/cubs-games-source; mkdir -p /tmp/cubs-games-source; tar -xzf \"$archive\" -C /tmp/cubs-games-source --strip-components=1; find . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +; cp -a /tmp/cubs-games-source/. /mnt/server/; if [ -f package-lock.json ]; then npm ci; else npm install; fi; npm run build; exec npm run start -- --hostname 0.0.0.0 --port {{SERVER_PORT}}'",
+  "startup": "bash -lc 'set -e; cd /mnt/server; source=/tmp/cubs-games-source; repo=\"$REPOSITORY_URL\"; case \"$repo\" in *.git) ;; *) repo=\"$repo.git\" ;; esac; rm -rf \"$source\"; if [ -n \"${REPOSITORY_TOKEN:-}\" ]; then git -c \"http.extraHeader=Authorization: Bearer ${REPOSITORY_TOKEN}\" clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; else git clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; fi; find . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +; cp -a \"$source/.\" /mnt/server/; if [ -f package-lock.json ]; then npm ci; else npm install; fi; npm run build; exec npm run start -- --hostname 0.0.0.0 --port {{SERVER_PORT}}'",
   "config": {
     "files": "{}",
     "startup": "{}",
@@ -21,7 +21,7 @@
   },
   "scripts": {
     "installation": {
-      "script": "#!/bin/bash\nset -e\ncd /mnt/server\narchive=/tmp/cubs-games-2.0.tar.gz\nrm -f \"$archive\"\ncurl -fsSL {{REPOSITORY_URL}}/archive/refs/heads/2.0.tar.gz -o \"$archive\"\nrm -rf /tmp/cubs-games-source\nmkdir -p /tmp/cubs-games-source\ntar -xzf \"$archive\" -C /tmp/cubs-games-source --strip-components=1\nfind . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +\ncp -a /tmp/cubs-games-source/. /mnt/server/\nnpm ci\nnpm run build\necho 'Cubs Games installation complete.'",
+      "script": "#!/bin/bash\nset -e\ncd /mnt/server\nsource=/tmp/cubs-games-source\nrepo=\"$REPOSITORY_URL\"\ncase \"$repo\" in\n  *.git) ;;\n  *) repo=\"$repo.git\" ;;\nesac\nrm -rf \"$source\"\nif [ -n \"${REPOSITORY_TOKEN:-}\" ]; then\n  git -c \"http.extraHeader=Authorization: Bearer ${REPOSITORY_TOKEN}\" clone --depth 1 --branch 2.0 \"$repo\" \"$source\"\nelse\n  git clone --depth 1 --branch 2.0 \"$repo\" \"$source\"\nfi\nfind . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +\ncp -a \"$source/.\" /mnt/server/\nnpm ci\nnpm run build\necho 'Cubs Games installation complete.'",
       "container": "ghcr.io/parkervcp/installers:debian",
       "entrypoint": "bash"
     }
@@ -35,6 +35,16 @@
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Repository Token",
+      "description": "Optional GitHub personal access token for a private repository. The token needs repository read access.",
+      "env_variable": "REPOSITORY_TOKEN",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": true,
+      "rules": "nullable|string",
       "field_type": "text"
     }
   ]
