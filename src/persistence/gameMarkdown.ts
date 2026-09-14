@@ -44,7 +44,7 @@ function splitEntries(markdown: string): MarkdownEntry[] {
 
 function extractTitle(line: string): string | undefined {
   const markdownMatch = line.match(/^#{2,}\s+(.+?)\s*$/);
-  const numberedMatch = line.match(/^\s*\d{1,3}\.\s+(.+?)\s*$/);
+  const numberedMatch = line.match(/^\s*\d{1,3}\.\s*(.+?)\s*$/);
   const rawTitle = markdownMatch?.[1] ?? numberedMatch?.[1];
   if (!rawTitle) return undefined;
 

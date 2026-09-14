@@ -4,6 +4,12 @@ import { describe, expect, it } from "vitest";
 import { parseMarkdownGames } from "@/src/persistence/gameMarkdown";
 
 describe("markdown game import", () => {
+  it("recognises numbered entries with or without a space after the number", () => {
+    const games = parseMarkdownGames("### 15.Bench Ball\nA ball game.\n\n15.Bench Ball\nAnother ball game.");
+
+    expect(games.map((game) => game.title)).toEqual(["Bench Ball", "Bench Ball"]);
+  });
+
   it("turns the game collection into distinct published game records", async () => {
     const markdown = await readFile(path.join(process.cwd(), "games.md"), "utf8");
     const games = parseMarkdownGames(markdown);
