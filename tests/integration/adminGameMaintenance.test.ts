@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createGame, editGame, setGamePublicationStatus } from "@/src/services/adminGameService";
+import { createSqliteGameRepository } from "@/src/persistence/database";
 import { demoAdminRole, seedGames } from "../fixtures/games";
 
 describe("admin game maintenance", () => {
@@ -13,5 +14,17 @@ describe("admin game maintenance", () => {
     expect(edited.find((game) => game.id === "promise-pairs")?.title).toBe("Promise Pair Cards");
     const retired = setGamePublicationStatus(edited, "promise-pairs", "retired", demoAdminRole);
     expect(retired.find((game) => game.id === "promise-pairs")?.publicationStatus).toBe("retired");
+  });
+
+  it("persists games across repository saves", () => {
+    const tempPath = `${process.cwd()}/tmp/admin-game-repo.sqlite`;
+    const repo = createSqliteGameRepository(tempPath);
+    repo.clear();
+
+    const next = { ...seedGames[0], id: "persisted-game", title: "Persisted Game" };
+    repo.save(next);
+
+    expect(repo.list().some((game) => game.id === "persisted-game")).toBe(true);
+    expect(repo.get("persisted-game")?.title).toBe("Persisted Game");
   });
 });

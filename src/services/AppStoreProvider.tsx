@@ -30,16 +30,31 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [ratings, setRatings] = useState(seedRatings);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw) as Pick<AppStore, "games" | "favourites" | "ratings">;
-      setGames(saved.games ?? seedGames);
-      setFavourites(saved.favourites ?? seedFavourites);
-      setRatings(saved.ratings ?? seedRatings);
-    } catch {
-      window.localStorage.removeItem(storageKey);
+    async function loadSavedData() {
+      try {
+        const response = await fetch("/api/games");
+        if (response.ok) {
+          const gamesFromApi = await response.json() as Game[];
+          if (Array.isArray(gamesFromApi) && gamesFromApi.length > 0) {
+            setGames(gamesFromApi);
+          }
+        }
+      } catch {
+        // Keep the seeded fallback if the API is unavailable.
+      }
+
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw) as Pick<AppStore, "games" | "favourites" | "ratings">;
+        setFavourites(saved.favourites ?? seedFavourites);
+        setRatings(saved.ratings ?? seedRatings);
+      } catch {
+        window.localStorage.removeItem(storageKey);
+      }
     }
+
+    void loadSavedData();
   }, []);
 
   useEffect(() => {
@@ -56,9 +71,36 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       setRatings((current) =>
         ratePlayedGame(current, { userId: currentLeaderId, gameId, rating, playedConfirmed: true, feedback })
       ),
-    saveGame: (game) => setGames((current) => createGame(current, game, demoAdminRole)),
-    updateGame: (gameId, changes) => setGames((current) => editGame(current, gameId, changes, demoAdminRole)),
-    changeStatus: (gameId, status) => setGames((current) => setGamePublicationStatus(current, gameId, status, demoAdminRole)),
+    saveGame: async (game) => {
+      const response = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", game })
+      });
+      if (!response.ok) throw new Error("Could not save game");
+      const payload = await response.json() as { games?: Game[] };
+      setGames(payload.games ?? games);
+    },
+    updateGame: async (gameId, changes) => {
+      const response = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update", gameId, changes })
+      });
+      if (!response.ok) throw new Error("Could not update game");
+      const payload = await response.json() as { games?: Game[] };
+      setGames(payload.games ?? games);
+    },
+    changeStatus: async (gameId, status) => {
+      const response = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "status", gameId, status })
+      });
+      if (!response.ok) throw new Error("Could not change status");
+      const payload = await response.json() as { games?: Game[] };
+      setGames(payload.games ?? games);
+    },
     importGames: async () => {
       const response = await fetch("/api/games");
       if (!response.ok) throw new Error("Could not load games.md");
