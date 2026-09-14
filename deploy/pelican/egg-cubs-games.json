@@ -12,7 +12,7 @@
     "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22"
   },
   "file_denylist": [],
-  "startup": "bash -lc 'set -e; cd /mnt/server; source=/tmp/cubs-games-source; repo=\"$REPOSITORY_URL\"; case \"$repo\" in *.git) ;; *) repo=\"$repo.git\" ;; esac; rm -rf \"$source\"; if [ -n \"${REPOSITORY_TOKEN:-}\" ]; then git -c \"http.extraHeader=Authorization: Bearer ${REPOSITORY_TOKEN}\" clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; else git clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; fi; find . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +; cp -a \"$source/.\" /mnt/server/; if [ -f package-lock.json ]; then npm ci; else npm install; fi; npm run build; exec npm run start -- --hostname 0.0.0.0 --port {{SERVER_PORT}}'",
+  "startup": "bash -lc 'set -e; cd /home/container; source=/tmp/cubs-games-source; repo=\"$REPOSITORY_URL\"; case \"$repo\" in *.git) ;; *) repo=\"$repo.git\" ;; esac; rm -rf \"$source\"; if [ -n \"${REPOSITORY_TOKEN:-}\" ]; then git -c \"http.extraHeader=Authorization: Bearer ${REPOSITORY_TOKEN}\" clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; else git clone --depth 1 --branch 2.0 \"$repo\" \"$source\"; fi; find . -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +; cp -a \"$source/.\" /home/container/; if [ -f package-lock.json ]; then npm ci; else npm install; fi; npm run build; exec npm run start -- --hostname 0.0.0.0 --port {{SERVER_PORT}}'",
   "config": {
     "files": "{}",
     "startup": "{}",
